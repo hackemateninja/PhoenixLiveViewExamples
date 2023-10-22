@@ -17,7 +17,8 @@ defmodule LiveViewStudio.Application do
       # Start Finch
       {Finch, name: LiveViewStudio.Finch},
       # Start the Endpoint (http/https)
-      LiveViewStudioWeb.Endpoint
+      LiveViewStudioWeb.Endpoint,
+      LiveViewStudioWeb.Presence
       # Start a worker by calling: LiveViewStudio.Worker.start_link(arg)
       # {LiveViewStudio.Worker, arg}
     ]

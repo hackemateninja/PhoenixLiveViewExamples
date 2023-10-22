@@ -2,7 +2,6 @@ defmodule LiveViewStudioWeb.ServersLive do
   use LiveViewStudioWeb, :live_view
 
   alias LiveViewStudio.Servers
-  alias LiveViewStudio.Servers.Server
   alias LiveViewStudioWeb.ServerFormComponent
 
   def mount(_params, _session, socket) do
@@ -21,7 +20,6 @@ defmodule LiveViewStudioWeb.ServersLive do
     {:ok, socket}
   end
 
-
   def handle_params(%{"id" => id}, _uri, socket) do
     server = Servers.get_server!(id)
 
@@ -35,14 +33,13 @@ defmodule LiveViewStudioWeb.ServersLive do
   def handle_params(_, _uri, socket) do
     socket =
       if socket.assigns.live_action == :new do
-        assign(socket,selected_server: nil)
+        assign(socket, selected_server: nil)
       else
-        assign(socket,selected_server: hd(socket.assigns.servers))
+        assign(socket, selected_server: hd(socket.assigns.servers))
       end
 
     {:noreply, socket}
   end
-
 
   def render(assigns) do
     IO.inspect(self(), label: "RENDER")
@@ -77,7 +74,7 @@ defmodule LiveViewStudioWeb.ServersLive do
             <.live_component module={ServerFormComponent} id={:create} />
           <% else %>
             <.server server={@selected_server} />
-          <% end  %>
+          <% end %>
           <div class="links">
             <.link navigate={~p"/topsecret"}>
               Top secret
@@ -92,42 +89,41 @@ defmodule LiveViewStudioWeb.ServersLive do
     """
   end
 
-
   attr :server, :map, required: true
 
   def server(assigns) do
     ~H"""
-      <div class="server">
-        <div class="header">
-          <h2><%= @server.name %></h2>
-          <button
-            class={@server.status}
-            phx-click="toggle-status"
-            phx-value-id={@server.id}>
-            <%= @server.status %>
-          </button>
-        </div>
-        <div class="body">
-          <div class="row">
-            <span>
-              <%= @server.deploy_count %> deploys
-            </span>
-            <span>
-              <%= @server.size %> MB
-            </span>
-            <span>
-              <%= @server.framework %>
-            </span>
-          </div>
-          <h3>Last Commit Message:</h3>
-          <blockquote>
-            <%= @server.last_commit_message %>
-          </blockquote>
-        </div>
+    <div class="server">
+      <div class="header">
+        <h2><%= @server.name %></h2>
+        <button
+          class={@server.status}
+          phx-click="toggle-status"
+          phx-value-id={@server.id}
+        >
+          <%= @server.status %>
+        </button>
       </div>
+      <div class="body">
+        <div class="row">
+          <span>
+            <%= @server.deploy_count %> deploys
+          </span>
+          <span>
+            <%= @server.size %> MB
+          </span>
+          <span>
+            <%= @server.framework %>
+          </span>
+        </div>
+        <h3>Last Commit Message:</h3>
+        <blockquote>
+          <%= @server.last_commit_message %>
+        </blockquote>
+      </div>
+    </div>
     """
   end
-
 
   def handle_event("toggle-status", %{"id" => id}, socket) do
     server = Servers.get_server!(id)
@@ -143,7 +139,6 @@ defmodule LiveViewStudioWeb.ServersLive do
     {:noreply, socket}
   end
 
-
   def handle_event("drink", _, socket) do
     IO.inspect(self(), label: "HANDLE DRINK EVENT")
 
@@ -151,7 +146,7 @@ defmodule LiveViewStudioWeb.ServersLive do
   end
 
   def handle_info({:server_created, server}, socket) do
-    socket = update(socket, :servers, &([server | &1]))
+    socket = update(socket, :servers, &[server | &1])
 
     {:noreply, socket}
   end

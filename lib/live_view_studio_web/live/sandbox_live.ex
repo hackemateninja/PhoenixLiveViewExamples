@@ -18,6 +18,27 @@ defmodule LiveViewStudioWeb.SandboxLive do
     {:ok, socket}
   end
 
+  def handle_event("get-quote", _, socket) do
+    price = Sandbox.calculate_price(socket.assigns.weight)
+
+    {:noreply, assign(socket, price: price)}
+  end
+
+  def handle_event("calculate", %{"length" => l, "width" => w, "depth" => d}, socket) do
+    weight = Sandbox.calculate_weight(l, w, d)
+
+    socket =
+      assign(socket,
+        length: l,
+        width: w,
+        depth: d,
+        weight: weight,
+        price: nil
+      )
+
+    {:noreply, socket}
+  end
+
   def render(assigns) do
     ~H"""
     <h1>Build A Sandbox</h1>
@@ -54,32 +75,11 @@ defmodule LiveViewStudioWeb.SandboxLive do
         </button>
       </form>
       <div :if={@price} class="quote">
-        Get your personal beach today for only <%= number_to_currency(@price) %>
+        Get your personal beach today for only <%= number_to_currency(
+          @price
+        ) %>
       </div>
     </div>
     """
   end
-
-  def handle_event("get-quote", _, socket) do
-    price = Sandbox.calculate_price(socket.assigns.weight)
-
-    {:noreply, assign(socket, price: price)}
-  end
-
-  def handle_event("calculate", params, socket) do
-    %{"length" => l, "width" => w, "depth" => d} = params
-    weight = Sandbox.calculate_weight(l, w, d)
-
-    socket =
-      assign(socket,
-        length: l,
-        width: w,
-        depth: d,
-        weight: weight,
-        price: nil
-      )
-
-    {:noreply, socket}
-  end
-
 end

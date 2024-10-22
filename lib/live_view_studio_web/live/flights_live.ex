@@ -5,15 +5,67 @@ defmodule LiveViewStudioWeb.FlightsLive do
   alias LiveViewStudio.Airports
 
   def mount(_params, _session, socket) do
-    socket =
-      assign(socket,
-        airport: "",
-        flights: Flights.list_flights(),
-        loading: false,
-        matches: %{}
-      )
+    socket = reset_data(socket)
 
     {:ok, socket}
+  end
+
+  def handle_event("suggest", %{"airport" => prefix}, socket) do
+    if String.length(prefix) > 0 do
+      matches = Airports.suggest(prefix)
+      socket = assign(socket, matches: matches, can_search?: true)
+      {:noreply, socket}
+    else
+      socket = reset_data(socket)
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("search-flight", %{"airport" => airport}, socket) do
+    socket = search_button_action(airport, socket)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("reset-search", _, socket) do
+    socket = reset_data(socket)
+    {:noreply, socket}
+  end
+
+  defp reset_data(socket) do
+    assign(socket,
+      airport: "",
+      flights: Flights.list_flights(),
+      loading: false,
+      matches: %{},
+      can_search?: false
+    )
+  end
+
+  defp search_button_action("", socket) do
+    reset_data(socket)
+  end
+
+  defp search_button_action(airport, socket) do
+    send(self(), {:searching, airport})
+
+    assign(socket,
+      airport: airport,
+      flights: [],
+      loading: true,
+      matches: %{},
+      can_search?: true
+    )
+  end
+
+  def handle_info({:searching, airport}, socket) do
+    socket =
+      assign(socket,
+        flights: Flights.search_by_airport(airport),
+        loading: false
+      )
+
+    {:noreply, socket}
   end
 
   def render(assigns) do
@@ -33,7 +85,7 @@ defmodule LiveViewStudioWeb.FlightsLive do
           phx-debounce="500"
         />
 
-        <button>
+        <button disabled={not @can_search?}>
           <img src="/images/search.svg" />
         </button>
       </form>
@@ -47,7 +99,7 @@ defmodule LiveViewStudioWeb.FlightsLive do
       </datalist>
 
       <div class="flights">
-        <ul>
+        <ul :if={length(@flights) > 0}>
           <li :for={flight <- @flights}>
             <div class="first-line">
               <div class="number">
@@ -67,35 +119,16 @@ defmodule LiveViewStudioWeb.FlightsLive do
             </div>
           </li>
         </ul>
+
+        <div :if={length(@flights) == 0 && not @loading} class="">
+          <h1>No flights here!</h1>
+
+          <button class="mt-4" phx-click="reset-search">
+            Reset the search
+          </button>
+        </div>
       </div>
     </div>
     """
-  end
-
-  def handle_event("suggest", %{"airport" => prefix}, socket) do
-    matches = Airports.suggest(prefix)
-
-    socket = assign(socket, matches: matches)
-
-    {:noreply, socket}
-  end
-
-  def handle_event("search-flight",%{"airport" => airport}, socket) do
-    send(self(), {:searching, airport})
-    socket =
-      assign(socket,
-        airport: airport,
-        flights: [],
-        loading: true
-      )
-    {:noreply, socket}
-  end
-  def handle_info({:searching, airport}, socket) do
-    socket =
-      assign(socket,
-        flights: Flights.search_by_airport(airport),
-        loading: false
-      )
-    {:noreply, socket}
   end
 end

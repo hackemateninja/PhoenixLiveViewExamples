@@ -22,14 +22,11 @@ defmodule LiveViewStudioWeb.FlightsLive do
   end
 
   def handle_event("search-flight", %{"airport" => airport}, socket) do
-    socket = search_button_action(airport, socket)
-
-    {:noreply, socket}
+    {:noreply, search_button_action(airport, socket)}
   end
 
   def handle_event("reset-search", _, socket) do
-    socket = reset_data(socket)
-    {:noreply, socket}
+    {:noreply, reset_data(socket)}
   end
 
   defp reset_data(socket) do
@@ -62,6 +59,7 @@ defmodule LiveViewStudioWeb.FlightsLive do
     socket =
       assign(socket,
         flights: Flights.search_by_airport(airport),
+        airport: "",
         loading: false
       )
 
@@ -85,7 +83,7 @@ defmodule LiveViewStudioWeb.FlightsLive do
           phx-debounce="500"
         />
 
-        <button disabled={not @can_search?}>
+        <button disabled={not @can_search?} phx-disable-with="Searching...">
           <img src="/images/search.svg" />
         </button>
       </form>
@@ -94,12 +92,12 @@ defmodule LiveViewStudioWeb.FlightsLive do
 
       <datalist id="matches">
         <option :for={{code, name} <- @matches} value={code}>
-          <%= name %>
+          <%= name %> (<%= code %>)
         </option>
       </datalist>
 
       <div class="flights">
-        <ul :if={length(@flights) > 0}>
+        <ul :if={not Enum.empty?(@flights)}>
           <li :for={flight <- @flights}>
             <div class="first-line">
               <div class="number">
@@ -120,7 +118,7 @@ defmodule LiveViewStudioWeb.FlightsLive do
           </li>
         </ul>
 
-        <div :if={length(@flights) == 0 && not @loading} class="">
+        <div :if={Enum.empty?(@flights) && not @loading} class="">
           <h1>No flights here!</h1>
 
           <button class="mt-4" phx-click="reset-search">

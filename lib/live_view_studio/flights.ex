@@ -3,10 +3,10 @@ defmodule LiveViewStudio.Flights do
     airport = String.upcase(airport)
     Process.sleep(500)
 
-    list_flights()
-    |> Enum.filter(
-      &(&1.origin == String.upcase(airport) || &1.destination == String.upcase(airport))
-    )
+    Enum.filter(list_flights(), fn flight ->
+      String.starts_with?(flight.origin, String.upcase(airport)) ||
+        String.starts_with?(flight.destination, String.upcase(airport))
+    end)
   end
 
   def list_flights do

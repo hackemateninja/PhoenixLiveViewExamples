@@ -12,7 +12,20 @@ defmodule LiveViewStudioWeb.DesksLive do
         form: to_form(Desks.change_desk(%Desk{}))
       )
 
+    socket =
+      allow_upload(
+        socket,
+        :photos,
+        accept: ~w(.png .jpeg .jpg),
+        max_entries: 3,
+        max_file_size: 10_000_000
+      )
+
     {:ok, stream(socket, :desks, Desks.list_desks())}
+  end
+
+  def handle_event("cancel", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :photos, ref)}
   end
 
   def handle_event("validate", %{"desk" => params}, socket) do
@@ -25,6 +38,28 @@ defmodule LiveViewStudioWeb.DesksLive do
   end
 
   def handle_event("save", %{"desk" => params}, socket) do
+    # Verifica si el directorio de destino existe, si no, lo crea
+    upload_dir = Path.join(["priv", "static", "uploads"])
+    # Crea el directorio si no existe
+    File.mkdir_p!(upload_dir)
+
+    photo_locations =
+      consume_uploaded_entries(socket, :photos, fn meta, entry ->
+        dest =
+          Path.join([
+            upload_dir,
+            "#{entry.uuid}-#{entry.client_name}"
+          ])
+
+        File.cp!(meta.path, dest)
+
+        url_path = static_path(socket, "/uploads/#{Path.basename(dest)}")
+
+        {:ok, url_path}
+      end)
+
+    params = Map.put(params, "photo_locations", photo_locations)
+
     case Desks.create_desk(params) do
       {:ok, _desk} ->
         changeset = Desks.change_desk(%Desk{})

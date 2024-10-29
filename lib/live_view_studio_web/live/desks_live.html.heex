@@ -3,6 +3,52 @@
   <.form for={@form} phx-submit="save" phx-change="validate">
     <.input field={@form[:name]} placeholder="Name" />
 
+    <div class="hint">
+      add up to <%= @uploads.photos.max_entries %> photos
+      (max <%= trunc(@uploads.photos.max_file_size / 1_000_000) %> MB each)
+    </div>
+
+    <div class="drop" phx-drop-target={@uploads.photos.ref}>
+      <div>
+        <img src="/images/upload.svg" />
+        <div>
+          <label for={@uploads.photos.ref}>
+            <span>Upload a file</span>
+            <.live_file_input upload={@uploads.photos} class="sr-only" />
+          </label>
+          <span>or drag and drop here</span>
+        </div>
+        <p>
+          <%= @uploads.photos.max_entries %> photos max,
+          up to <%= trunc(@uploads.photos.max_file_size / 1_000_000) %> MB each
+        </p>
+      </div>
+    </div>
+
+    <.error :for={err <- upload_errors(@uploads.photos)}>
+      <%= Phoenix.Naming.humanize(err) %>
+    </.error>
+
+    <div :for={entry <- @uploads.photos.entries} class="entry">
+      <.live_img_preview entry={entry} />
+
+      <div class="progress">
+        <div class="value">
+          <%= entry.progress %>%
+        </div>
+        <div class="bar">
+          <span style={"width: #{entry.progress}%"}></span>
+        </div>
+        <.error :for={err <- upload_errors(@uploads.photos, entry)}>
+          <%= Phoenix.Naming.humanize(err) %>
+        </.error>
+      </div>
+
+      <a phx-click="cancel" phx-value-ref={entry.ref}>
+        &times;
+      </a>
+    </div>
+
     <.button phx-disable-with="Uploading...">
       Upload
     </.button>
